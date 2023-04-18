@@ -49,7 +49,7 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	app.render(w, http.StatusOK, "home.html", &templateData{
+	app.render(w, http.StatusOK, "view.html", &templateData{
 		Snippet: snippet,
 	})
 }
