@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"net/http"
+	"text/template"
 
 	"github.com/gopher-bell/site/internal/models"
 	"github.com/gopher-bell/site/log"
@@ -13,7 +14,8 @@ import (
 )
 
 type application struct {
-	snippets *models.SnippetModel
+	snippets      *models.SnippetModel
+	templateCache map[string]*template.Template
 }
 
 func main() {
@@ -32,8 +34,14 @@ func main() {
 	}
 	defer db.Close()
 
+	templateCache, err := newTemplateCache()
+	if err != nil {
+		log.ZapLogger.Fatal("failed to cache template", zap.Error(err))
+	}
+
 	app := &application{
-		snippets: &models.SnippetModel{DB: db},
+		snippets:      &models.SnippetModel{DB: db},
+		templateCache: templateCache,
 	}
 	srv := &http.Server{
 		Addr:    *addr,
