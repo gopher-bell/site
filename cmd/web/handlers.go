@@ -1,11 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 
+	"github.com/gopher-bell/site/internal/models"
 	"github.com/gopher-bell/site/log"
 	"go.uber.org/zap"
 )
@@ -16,26 +17,38 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files := []string{
-		"./ui/html/base.html",
-		"./ui/html/pages/home.html",
-		"./ui/html/partials/nav.html",
-	}
-
-	ts, err := template.ParseFiles(files...)
+	snippets, err := app.snippets.Latest()
 	if err != nil {
-		log.ZapLogger.Error("failed to parse template files", zap.Error(err))
+		log.ZapLogger.Error("failed to get snippet lists", zap.Error(err))
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
 
-	err = ts.ExecuteTemplate(w, "base", nil)
-	if err != nil {
-		log.ZapLogger.Error("failed to execute template files", zap.Error(err))
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	for _, snippet := range snippets {
+		fmt.Fprintf(w, "%+v\n", snippet)
 	}
 
-	w.Write([]byte("Hello from Jong!"))
+	// files := []string{
+	// 	"./ui/html/base.html",
+	// 	"./ui/html/pages/home.html",
+	// 	"./ui/html/partials/nav.html",
+	// }
+
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	log.ZapLogger.Error("failed to parse template files", zap.Error(err))
+	// 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	// 	return
+	// }
+
+	// err = ts.ExecuteTemplate(w, "base", nil)
+	// if err != nil {
+	// 	log.ZapLogger.Error("failed to execute template files", zap.Error(err))
+	// 	http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	// 	return
+	// }
+
+	// w.Write([]byte("Hello from Jong!"))
 }
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +58,20 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "Display a snippet with ID %d", id)
+	snippet, err := app.snippets.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			log.ZapLogger.Error(models.ErrNoRecord.Error(), zap.Error(err))
+			http.NotFound(w, r)
+		} else {
+			log.ZapLogger.Error("failed to get data", zap.Error(err))
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+
+		return
+	}
+
+	fmt.Fprintf(w, "%+v", snippet)
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
