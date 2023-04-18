@@ -1,23 +1,33 @@
 package main
 
 import (
-	"log"
+	"flag"
 	"net/http"
+
+	"github.com/gopher-bell/site/log"
+	"go.uber.org/zap"
 )
 
+type application struct {
+}
+
 func main() {
-	mux := http.NewServeMux()
+	addr := flag.String("addr", ":4000", "HTTP network address")
+	flag.Parse()
 
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+	log.Init()
+	defer log.Quit()
 
-	mux.HandleFunc("/", home)
-	mux.HandleFunc("/snippet/view", snippetView)
-	mux.HandleFunc("/snippet/create", snippetCreate)
+	log.ZapLogger.Info("starting http server...", zap.String("addr", *addr))
 
-	log.Println("starting server on :4000")
-	err := http.ListenAndServe(":4000", mux)
+	app := &application{}
+	srv := &http.Server{
+		Addr:    *addr,
+		Handler: app.routes(),
+	}
+
+	err := srv.ListenAndServe()
 	if err != nil {
-		log.Fatalln(err)
+		log.ZapLogger.Error("failed to start http server", zap.Error(err))
 	}
 }
