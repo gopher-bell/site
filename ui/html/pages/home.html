@@ -1,5 +1,4 @@
 {{define "title"}}Home{{end}}
-
 {{define "main"}}
 <h2>Latest Snippets</h2>
 {{if .Snippets}}
@@ -11,8 +10,9 @@
 </tr>
 {{range .Snippets}}
 <tr>
-<td><a href='/snippet/view?id={{.ID}}'>{{.Title}}</a></td>
-<td>{{.Created}}</td>
+<td><a href='/snippet/view/{{.ID}}'>{{.Title}}</a></td>
+<!-- Use the new template function here -->
+<td>{{humanDate .Created}}</td>
 <td>#{{.ID}}</td>
 </tr>
 {{end}}
