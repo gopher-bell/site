@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"text/template"
 
+	"github.com/go-playground/form/v4"
 	"github.com/gopher-bell/site/internal/models"
 	"github.com/gopher-bell/site/log"
 	"go.uber.org/zap"
@@ -16,6 +17,7 @@ import (
 type application struct {
 	snippets      *models.SnippetModel
 	templateCache map[string]*template.Template
+	formDecoder   *form.Decoder
 }
 
 func main() {
@@ -39,10 +41,14 @@ func main() {
 		log.ZapLogger.Fatal("failed to cache template", zap.Error(err))
 	}
 
+	formDecoder := form.NewDecoder()
+
 	app := &application{
 		snippets:      &models.SnippetModel{DB: db},
 		templateCache: templateCache,
+		formDecoder:   formDecoder,
 	}
+
 	srv := &http.Server{
 		Addr:    *addr,
 		Handler: app.routes(),
