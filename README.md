@@ -1,6 +1,6 @@
 ## Site
 
-This project is a web application called Jong Box.  
+This project is a web application called SnippetBox.  
 It's a simple CRUD board with user authentications.
 
 API Lists
